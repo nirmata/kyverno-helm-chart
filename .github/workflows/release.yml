@@ -73,7 +73,14 @@ jobs:
         exit 0
 
     - name: Copy dynamic policies to chart templates
-      run: cp -v dynamic-policies/*.yaml charts/kyverno-policies/templates/
+      run: |
+        shopt -s nullglob
+        files=(dynamic-policies/*.yaml)
+        if [ ${#files[@]} -eq 0 ]; then
+          echo "No dynamic policy files found. Skipping copy."
+        else
+          cp -v "${files[@]}" charts/kyverno-policies/templates/
+        fi
 
     - name: Copy static policies
       run: cp -v static-policies/*.yaml charts/kyverno-policies/templates/
