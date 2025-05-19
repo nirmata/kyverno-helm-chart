@@ -55,17 +55,23 @@ jobs:
         git commit -m "Initialize gh-pages branch"
         git push -f origin gh-pages
 
+    - name: Checkout main branch for chart
+      uses: actions/checkout@v3
+      with:
+        ref: main
+        path: main
+
+    - name: Package Helm chart
+      run: |
+        cd main/kyverno-policies
+        helm package . --destination ../../gh-pages/
+
     - name: Checkout gh-pages branch
       uses: actions/checkout@v3
       with:
         ref: gh-pages
         path: gh-pages
         persist-credentials: true
-
-    - name: Package Helm chart
-      run: |
-        cd kyverno-policies
-        helm package . --destination ../gh-pages/
 
     - name: Update Helm repository index
       run: |
