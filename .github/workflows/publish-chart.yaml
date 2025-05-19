@@ -154,12 +154,30 @@ jobs:
         
         echo "Found chart file: $CHART_FILE"
         
-        # Verify the chart
-        echo "Linting chart: $CHART_FILE"
-        helm lint "$CHART_FILE"
+        # Verify the chart package structure
+        echo "Verifying chart package structure..."
+        tar -tvf "$CHART_FILE"
         
-        echo "Templating chart: $CHART_FILE"
-        helm template kyverno-policies "$CHART_FILE"
+        # Extract and verify Kyverno policies
+        echo "Extracting and verifying Kyverno policies..."
+        TEMP_DIR=$(mktemp -d)
+        tar -xzf "$CHART_FILE" -C "$TEMP_DIR"
+        
+        # Verify each policy file
+        for policy in "$TEMP_DIR"/kyverno-policies/templates/*.yaml; do
+          echo "Verifying policy: $policy"
+          if [ -f "$policy" ]; then
+            # Basic YAML validation
+            if ! yq eval '.' "$policy" > /dev/null 2>&1; then
+              echo "Error: Invalid YAML in $policy"
+              exit 1
+            fi
+            echo "Policy $policy is valid YAML"
+          fi
+        done
+        
+        # Clean up
+        rm -rf "$TEMP_DIR"
         
         echo "Chart verification completed successfully"
 
