@@ -1,0 +1,6 @@
+apiVersion: v2
+name: kyverno-policies
+description: A Helm chart to deploy kyverno policies for TenneT
+type: application
+version: 0.1.0
+appVersion: "1.0"
