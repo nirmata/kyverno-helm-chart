@@ -99,21 +99,18 @@ jobs:
         echo "Contents of temporary directory:"
         ls -la "$TEMP_DIR"
         
-        # Move to workspace root
-        cd "$GITHUB_WORKSPACE"
-        
-        # Create packaged-chart directory
-        mkdir -p packaged-chart
+        # Create packaged-chart directory in workspace root
+        mkdir -p "$GITHUB_WORKSPACE/packaged-chart"
         
         # Copy the package
-        cp "$TEMP_DIR"/*.tgz packaged-chart/
+        cp "$TEMP_DIR"/*.tgz "$GITHUB_WORKSPACE/packaged-chart/"
         
         # Clean up
         rm -rf "$TEMP_DIR"
         
         # Verify the copy
         echo "Contents of packaged-chart directory:"
-        ls -la packaged-chart
+        ls -la "$GITHUB_WORKSPACE/packaged-chart"
 
     - name: Checkout gh-pages branch
       uses: actions/checkout@v3
@@ -125,7 +122,12 @@ jobs:
     - name: Copy chart to gh-pages
       run: |
         echo "Copying chart to gh-pages..."
-        cp -r ../packaged-chart/* gh-pages/
+        echo "Current directory: $(pwd)"
+        echo "Contents of workspace:"
+        ls -la "$GITHUB_WORKSPACE"
+        echo "Contents of packaged-chart:"
+        ls -la "$GITHUB_WORKSPACE/packaged-chart"
+        cp -r "$GITHUB_WORKSPACE/packaged-chart"/* gh-pages/
         echo "Contents of gh-pages directory:"
         ls -la gh-pages
 
