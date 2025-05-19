@@ -21,7 +21,7 @@ jobs:
 
     - name: Prepare folders
       run: |
-        mkdir -p charts/kyverno-policies/templates
+        mkdir -p kyverno-policies/templates
         mkdir -p dynamic-policies
         rm -f dynamic-policies/*.yaml
 
@@ -68,7 +68,7 @@ jobs:
     - name: Copy dynamic policies to chart templates
       run: |
         echo "Copying dynamic policies..."
-        cp -v dynamic-policies/*.yaml charts/kyverno-policies/templates/ || {
+        cp -v dynamic-policies/*.yaml kyverno-policies/templates/ || {
           echo "Failed to copy dynamic policies"
           exit 1
         }
@@ -78,14 +78,14 @@ jobs:
       id: changes
       run: |
         # Check if there are any changes in the templates directory
-        if git diff --quiet charts/kyverno-policies/templates/; then
+        if git diff --quiet kyverno-policies/templates/; then
           echo "No changes detected in policies"
           echo "changed=false" >> $GITHUB_OUTPUT
         else
           echo "Changes detected in policies"
           echo "changed=true" >> $GITHUB_OUTPUT
           # Show the changes for debugging
-          git diff charts/kyverno-policies/templates/
+          git diff kyverno-policies/templates/
         fi
 
     - name: Exit if no changes
@@ -96,20 +96,20 @@ jobs:
 
     - name: Templatize validationFailureAction
       run: |
-        for file in charts/kyverno-policies/templates/*.yaml; do
+        for file in kyverno-policies/templates/*.yaml; do
           sed -i 's/validationFailureAction: [A-Za-z]*/validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}/' "$file"
         done
 
     - name: Bump chart version
       run: |
-        CHART_FILE="charts/kyverno-policies/Chart.yaml"
+        CHART_FILE="kyverno-policies/Chart.yaml"
         CURRENT_VERSION=$(grep '^version:' "$CHART_FILE" | awk '{print $2}')
         NEXT_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
         sed -i "s/^version: .*/version: $NEXT_VERSION/" "$CHART_FILE"
         echo "Bumped chart version: $CURRENT_VERSION -> $NEXT_VERSION"
 
     - name: Package Helm chart
-      run: helm package charts/kyverno-policies --destination ./
+      run: helm package kyverno-policies --destination ./
 
     - name: Set up Git
       run: |
