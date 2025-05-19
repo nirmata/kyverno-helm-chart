@@ -61,10 +61,28 @@ jobs:
         ref: main
         path: main
 
+    - name: Verify chart structure
+      run: |
+        cd main/kyverno-policies
+        echo "Verifying chart structure..."
+        ls -la
+        if [ ! -f "Chart.yaml" ]; then
+          echo "Error: Chart.yaml not found"
+          exit 1
+        fi
+        if [ ! -d "templates" ]; then
+          echo "Error: templates directory not found"
+          exit 1
+        fi
+
     - name: Package Helm chart
       run: |
         cd main/kyverno-policies
+        CHART_NAME=$(grep '^name:' Chart.yaml | awk '{print $2}')
+        CHART_VERSION=$(grep '^version:' Chart.yaml | awk '{print $2}')
+        echo "Packaging chart $CHART_NAME version $CHART_VERSION"
         helm package . --destination ../../gh-pages/
+        ls -la ../../gh-pages/
 
     - name: Checkout gh-pages branch
       uses: actions/checkout@v3
@@ -78,15 +96,24 @@ jobs:
         cd gh-pages
         helm repo index . --url https://nirmata.github.io/tennet-helm-chart/
 
+    - name: Verify chart
+      run: |
+        cd gh-pages
+        echo "Verifying chart in gh-pages..."
+        ls -la
+        CHART_FILE=$(ls *.tgz)
+        if [ -z "$CHART_FILE" ]; then
+          echo "Error: No chart file found"
+          exit 1
+        fi
+        echo "Linting chart: $CHART_FILE"
+        helm lint "$CHART_FILE"
+        echo "Templating chart: $CHART_FILE"
+        helm template kyverno-policies "$CHART_FILE"
+
     - name: Commit and push changes
       run: |
         cd gh-pages
         git add .
         git commit -m "Update chart version on $(date -u +'%Y-%m-%dT%H:%M:%SZ')" || echo "No changes to commit"
-        git push origin gh-pages
-
-    - name: Verify chart
-      run: |
-        cd gh-pages
-        helm lint *.tgz
-        helm template kyverno-policies *.tgz 
+        git push origin gh-pages 
