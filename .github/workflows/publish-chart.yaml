@@ -1,0 +1,76 @@
+name: Publish Helm Chart
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'kyverno-policies/**'
+      - '.github/workflows/publish-chart.yaml'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+
+    - name: Configure Git
+      run: |
+        git config --global user.name "fast-n-curious"
+        git config --global user.email "krishna@nirmata.com"
+
+    - name: Create and initialize gh-pages branch
+      run: |
+        # Create gh-pages branch if it doesn't exist
+        if ! git show-ref --verify --quiet refs/heads/gh-pages; then
+          echo "Creating gh-pages branch..."
+          git checkout --orphan gh-pages
+          git rm -rf .
+          # Create initial index.yaml
+          helm repo index . --url https://nirmata.github.io/tennet-helm-chart/
+          git add index.yaml
+          git commit -m "Initialize gh-pages branch"
+          git push origin gh-pages
+        else
+          echo "gh-pages branch already exists"
+        fi
+
+    - name: Checkout gh-pages branch
+      uses: actions/checkout@v3
+      with:
+        ref: gh-pages
+        path: gh-pages
+        persist-credentials: true
+
+    - name: Package Helm chart
+      run: |
+        cd kyverno-policies
+        helm package . --destination ../gh-pages/
+
+    - name: Update Helm repository index
+      run: |
+        cd gh-pages
+        helm repo index . --url https://nirmata.github.io/tennet-helm-chart/
+
+    - name: Commit and push changes
+      run: |
+        cd gh-pages
+        git add .
+        git commit -m "Update chart version on $(date -u +'%Y-%m-%dT%H:%M:%SZ')" || echo "No changes to commit"
+        git push origin gh-pages
+
+    - name: Verify chart
+      run: |
+        cd gh-pages
+        helm lint *.tgz
+        helm template kyverno-policies *.tgz 
