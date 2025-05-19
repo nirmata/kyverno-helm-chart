@@ -1,0 +1,117 @@
+name: Sync, Build, and Publish Kyverno Policy Helm Chart
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly sync on Monday 3 AM UTC
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+      with:
+        ref: main
+
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+
+    - name: Prepare folders
+      run: |
+        mkdir -p charts/kyverno-policies/templates
+        mkdir -p dynamic-policies
+        rm -f dynamic-policies/*.yaml
+
+    - name: Download dynamic Kyverno policies
+      run: |
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-capabilities.yaml
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/disallow_cri_sock_mount.yaml
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/disallow_default_namespace.yaml
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/workload-security/disallow-custom-snippets.yaml
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/best-practices/disallow-empty-ingress-host/disallow_empty_ingress_host.yaml
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-host-namespaces.yaml
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-host-path.yaml       
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-host-ports.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-privileged-containers.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/disallow-privilege-escalation.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-proc-mount.yaml
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-selinux.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/require_drop_all.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/best-practices/require_probes/require_probes.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/require_pod_requests_limits.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/require-run-as-non-root-user.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/restrict-service-external-ips.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-workload-security/pols/restrict_image_registries.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/restrict_node_port.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/restrict-seccomp-strict.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/pod-security/baseline/restrict-sysctls/restrict-sysctls.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/restrict-apparmor-profiles.yaml        
+        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/restrict-volume-types.yaml        
+        curl -LO https://raw.githubusercontent.com/kyverno/policies/refs/heads/main/other/restrict-controlplane-scheduling/restrict-controlplane-scheduling.yaml        
+        curl -LO https://raw.githubusercontent.com/kyverno/policies/refs/heads/main/other/restrict-controlplane-scheduling/restrict-controlplane-scheduling.yaml
+
+    - name: Compare dynamic policies with chart templates
+      id: changes
+      run: |
+        CHANGED=false
+        for file in dynamic-policies/*.yaml; do
+          fname=$(basename "$file")
+          if ! cmp -s "$file" "charts/kyverno-policies/templates/$fname"; then
+            echo "Detected change in: $fname"
+            CHANGED=true
+            break
+          fi
+        done
+        echo "changed=$CHANGED" >> $GITHUB_OUTPUT
+
+    - name: Exit if no changes in dynamic policies
+      if: steps.changes.outputs.changed == 'false'
+      run: |
+        echo "No changes in dynamic Kyverno policies. Skipping build."
+        exit 0
+
+    - name: Copy dynamic policies to chart templates
+      run: cp -v dynamic-policies/*.yaml charts/kyverno-policies/templates/
+
+    - name: Copy static policies
+      run: cp -v static-policies/*.yaml charts/kyverno-policies/templates/
+
+    - name: Templatize validationFailureAction
+      run: |
+        for file in charts/kyverno-policies/templates/*.yaml; do
+          sed -i 's/validationFailureAction: [A-Za-z]*/validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}/' "$file"
+        done
+
+    - name: Bump chart version
+      run: |
+        CHART_FILE="charts/kyverno-policies/Chart.yaml"
+        CURRENT_VERSION=$(grep '^version:' "$CHART_FILE" | awk '{print $2}')
+        NEXT_VERSION=$(echo "$CURRENT_VERSION" | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+        sed -i "s/^version: .*/version: $NEXT_VERSION/" "$CHART_FILE"
+        echo "Bumped chart version: $CURRENT_VERSION -> $NEXT_VERSION"
+
+    - name: Package Helm chart
+      run: helm package charts/kyverno-policies --destination ./
+
+    - name: Set up Git
+      run: |
+        git config --global user.name "fast-n-curious"
+        git config --global user.email "krishna@nirmata.com"
+
+    - name: Checkout gh-pages branch
+      uses: actions/checkout@v3
+      with:
+        ref: gh-pages
+        path: gh-pages
+        persist-credentials: true
+
+    - name: Publish chart to gh-pages
+      run: |
+        mv *.tgz gh-pages/
+        cd gh-pages
+        helm repo index . --url https://<your-github-username>.github.io/helm-charts/
+        git add .
+        git commit -m "Update chart version on $(date -u +'%Y-%m-%dT%H:%M:%SZ')" || echo "No changes to commit"
+        git push origin gh-pages
