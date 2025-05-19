@@ -116,6 +116,22 @@ jobs:
         git config --global user.name "fast-n-curious"
         git config --global user.email "krishna@nirmata.com"
 
+    - name: Create and initialize gh-pages branch
+      run: |
+        # Create gh-pages branch if it doesn't exist
+        if ! git show-ref --verify --quiet refs/heads/gh-pages; then
+          echo "Creating gh-pages branch..."
+          git checkout --orphan gh-pages
+          git rm -rf .
+          # Create initial index.yaml
+          helm repo index . --url https://nirmata.github.io/tennet-helm-chart/
+          git add index.yaml
+          git commit -m "Initialize gh-pages branch"
+          git push origin gh-pages
+        else
+          echo "gh-pages branch already exists"
+        fi
+
     - name: Checkout gh-pages branch
       uses: actions/checkout@v3
       with:
@@ -127,7 +143,7 @@ jobs:
       run: |
         mv *.tgz gh-pages/
         cd gh-pages
-        helm repo index . --url https://<your-github-username>.github.io/helm-charts/
+        helm repo index . --url https://nirmata.github.io/tennet-helm-chart/
         git add .
         git commit -m "Update chart version on $(date -u +'%Y-%m-%dT%H:%M:%SZ')" || echo "No changes to commit"
         git push origin gh-pages
