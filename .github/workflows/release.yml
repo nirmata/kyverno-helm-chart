@@ -26,31 +26,43 @@ jobs:
 
     - name: Download dynamic Kyverno policies
       run: |
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-capabilities.yaml
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/disallow_cri_sock_mount.yaml
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/disallow_default_namespace.yaml
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/workload-security/disallow-custom-snippets.yaml
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/best-practices/disallow-empty-ingress-host/disallow_empty_ingress_host.yaml
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-host-namespaces.yaml
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-host-path.yaml       
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-host-ports.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-privileged-containers.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/disallow-privilege-escalation.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-proc-mount.yaml
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-selinux.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/require_drop_all.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/best-practices/require_probes/require_probes.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/require_pod_requests_limits.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/require-run-as-non-root-user.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/restrict-service-external-ips.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-workload-security/pols/restrict_image_registries.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/restrict_node_port.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/restrict-seccomp-strict.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/pod-security/baseline/restrict-sysctls/restrict-sysctls.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/restrict-apparmor-profiles.yaml        
-        curl -LO https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/restrict-volume-types.yaml        
-        curl -LO https://raw.githubusercontent.com/kyverno/policies/refs/heads/main/other/restrict-controlplane-scheduling/restrict-controlplane-scheduling.yaml        
-        curl -LO https://raw.githubusercontent.com/kyverno/policies/refs/heads/main/other/restrict-controlplane-scheduling/restrict-controlplane-scheduling.yaml
+        set -e
+        echo "Starting policy downloads..."
+        for url in \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-capabilities.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/disallow_cri_sock_mount.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/disallow_default_namespace.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/workload-security/disallow-custom-snippets.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/best-practices/disallow-empty-ingress-host/disallow_empty_ingress_host.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-host-namespaces.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-host-path.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-host-ports.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-privileged-containers.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/disallow-privilege-escalation.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-proc-mount.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/disallow-selinux.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/require_drop_all.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/best-practices/require_probes/require_probes.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/require_pod_requests_limits.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/require-run-as-non-root-user.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/restrict-service-external-ips.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-workload-security/pols/restrict_image_registries.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/best-practices-k8s/pols/restrict_node_port.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/restrict-seccomp-strict.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/pod-security/baseline/restrict-sysctls/restrict-sysctls.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-baseline/pols/restrict-apparmor-profiles.yaml" \
+          "https://raw.githubusercontent.com/nirmata/kyverno-policies/1efe11ba5c0ae3fb3433a6a0718289f92ee1ae4d/charts/pod-security-restricted/pols/restrict-volume-types.yaml" \
+          "https://raw.githubusercontent.com/kyverno/policies/refs/heads/main/other/restrict-controlplane-scheduling/restrict-controlplane-scheduling.yaml"
+        do
+          filename=$(basename "$url")
+          echo "Downloading $filename..."
+          if ! curl -L -o "dynamic-policies/$filename" "$url"; then
+            echo "Failed to download $filename"
+            exit 1
+          fi
+        done
+        echo "All policies downloaded successfully"
+        ls -la dynamic-policies/
 
     - name: Compare dynamic policies with chart templates
       id: changes
@@ -73,14 +85,7 @@ jobs:
         exit 0
 
     - name: Copy dynamic policies to chart templates
-      run: |
-        shopt -s nullglob
-        files=(dynamic-policies/*.yaml)
-        if [ ${#files[@]} -eq 0 ]; then
-          echo "No dynamic policy files found. Skipping copy."
-        else
-          cp -v "${files[@]}" charts/kyverno-policies/templates/
-        fi
+      run: cp -v dynamic-policies/*.yaml charts/kyverno-policies/templates/
 
     - name: Copy static policies
       run: cp -v static-policies/*.yaml charts/kyverno-policies/templates/
