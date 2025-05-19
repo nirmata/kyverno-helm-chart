@@ -73,6 +73,7 @@ jobs:
           echo "Error: templates directory not found"
           exit 1
         fi
+        echo "Chart structure verification passed"
 
     - name: Package Helm chart
       run: |
@@ -80,8 +81,39 @@ jobs:
         CHART_NAME=$(grep '^name:' Chart.yaml | awk '{print $2}')
         CHART_VERSION=$(grep '^version:' Chart.yaml | awk '{print $2}')
         echo "Packaging chart $CHART_NAME version $CHART_VERSION"
-        helm package . --destination ../gh-pages/
-        ls -la ../gh-pages/
+        
+        # Create temporary directory for packaging
+        TEMP_DIR=$(mktemp -d)
+        echo "Created temporary directory: $TEMP_DIR"
+        
+        # Package the chart
+        helm package . --destination "$TEMP_DIR"
+        
+        # Verify the package was created
+        if [ ! -f "$TEMP_DIR"/*.tgz ]; then
+          echo "Error: Chart package was not created"
+          exit 1
+        fi
+        
+        # List the contents
+        echo "Contents of temporary directory:"
+        ls -la "$TEMP_DIR"
+        
+        # Move to workspace root
+        cd "$GITHUB_WORKSPACE"
+        
+        # Create packaged-chart directory
+        mkdir -p packaged-chart
+        
+        # Copy the package
+        cp "$TEMP_DIR"/*.tgz packaged-chart/
+        
+        # Clean up
+        rm -rf "$TEMP_DIR"
+        
+        # Verify the copy
+        echo "Contents of packaged-chart directory:"
+        ls -la packaged-chart
 
     - name: Checkout gh-pages branch
       uses: actions/checkout@v3
@@ -92,32 +124,50 @@ jobs:
 
     - name: Copy chart to gh-pages
       run: |
-        cp -r ../gh-pages/* gh-pages/
-        ls -la gh-pages/
+        echo "Copying chart to gh-pages..."
+        cp -r ../packaged-chart/* gh-pages/
+        echo "Contents of gh-pages directory:"
+        ls -la gh-pages
 
     - name: Update Helm repository index
       run: |
         cd gh-pages
+        echo "Updating Helm repository index..."
         helm repo index . --url https://nirmata.github.io/tennet-helm-chart/
+        echo "Contents of index.yaml:"
+        cat index.yaml
 
     - name: Verify chart
       run: |
         cd gh-pages
         echo "Verifying chart in gh-pages..."
         ls -la
-        CHART_FILE=$(ls *.tgz)
+        
+        # Check for .tgz file
+        CHART_FILE=$(ls *.tgz 2>/dev/null)
         if [ -z "$CHART_FILE" ]; then
           echo "Error: No chart file found"
           exit 1
         fi
+        
+        echo "Found chart file: $CHART_FILE"
+        
+        # Verify the chart
         echo "Linting chart: $CHART_FILE"
         helm lint "$CHART_FILE"
+        
         echo "Templating chart: $CHART_FILE"
         helm template kyverno-policies "$CHART_FILE"
+        
+        echo "Chart verification completed successfully"
 
     - name: Commit and push changes
       run: |
         cd gh-pages
+        echo "Committing changes..."
         git add .
+        git status
         git commit -m "Update chart version on $(date -u +'%Y-%m-%dT%H:%M:%SZ')" || echo "No changes to commit"
-        git push origin gh-pages 
+        echo "Pushing changes..."
+        git push origin gh-pages
+        echo "Changes pushed successfully" 
