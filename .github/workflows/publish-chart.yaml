@@ -55,15 +55,14 @@ jobs:
         git commit -m "Initialize gh-pages branch"
         git push -f origin gh-pages
 
-    - name: Checkout main branch for chart
+    - name: Checkout main branch
       uses: actions/checkout@v3
       with:
         ref: main
-        path: main
 
     - name: Verify chart structure
       run: |
-        cd main/kyverno-policies
+        cd kyverno-policies
         echo "Verifying chart structure..."
         ls -la
         if [ ! -f "Chart.yaml" ]; then
@@ -77,12 +76,12 @@ jobs:
 
     - name: Package Helm chart
       run: |
-        cd main/kyverno-policies
+        cd kyverno-policies
         CHART_NAME=$(grep '^name:' Chart.yaml | awk '{print $2}')
         CHART_VERSION=$(grep '^version:' Chart.yaml | awk '{print $2}')
         echo "Packaging chart $CHART_NAME version $CHART_VERSION"
-        helm package . --destination ../../gh-pages/
-        ls -la ../../gh-pages/
+        helm package . --destination ../gh-pages/
+        ls -la ../gh-pages/
 
     - name: Checkout gh-pages branch
       uses: actions/checkout@v3
@@ -90,6 +89,11 @@ jobs:
         ref: gh-pages
         path: gh-pages
         persist-credentials: true
+
+    - name: Copy chart to gh-pages
+      run: |
+        cp -r ../gh-pages/* gh-pages/
+        ls -la gh-pages/
 
     - name: Update Helm repository index
       run: |
