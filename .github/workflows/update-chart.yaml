@@ -18,10 +18,10 @@ jobs:
 
     - name: Prepare folders
       run: |
-        mkdir -p charts/kyverno-policies/templates
+        mkdir -p kyverno-policies/templates
         mkdir -p dynamic-policies
         rm -f dynamic-policies/*.yaml
-        rm -f charts/kyverno-policies/templates/*.yaml
+        rm -f kyverno-policies/templates/*.yaml
 
     - name: Download dynamic Kyverno policies
       run: |
@@ -41,7 +41,7 @@ jobs:
         if [ ${#files[@]} -eq 0 ]; then
           echo "⚠️ No dynamic policies found."
         else
-          cp -v "${files[@]}" charts/kyverno-policies/templates/
+          cp -v "${files[@]}" kyverno-policies/templates/
         fi
 
     - name: Copy static policies to templates
@@ -51,18 +51,18 @@ jobs:
         if [ ${#files[@]} -eq 0 ]; then
           echo "⚠️ No static policies found."
         else
-          cp -v "${files[@]}" charts/kyverno-policies/templates/
+          cp -v "${files[@]}" kyverno-policies/templates/
         fi
 
     - name: Templatize validationFailureAction
       run: |
-        for file in charts/kyverno-policies/templates/*.yaml; do
+        for file in kyverno-policies/templates/*.yaml; do
           sed -i 's/validationFailureAction: [A-Za-z]*/validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}/' "$file"
         done
 
     - name: Bump chart version
       run: |
-        CHART_FILE="charts/kyverno-policies/Chart.yaml"
+        CHART_FILE="kyverno-policies/Chart.yaml"
         CURRENT_VERSION=$(grep '^version:' $CHART_FILE | awk '{print $2}')
         NEXT_VERSION=$(echo $CURRENT_VERSION | awk -F. '{$NF+=1}1' | sed 's/ /./g')
         sed -i "s/^version: .*/version: $NEXT_VERSION/" $CHART_FILE
@@ -70,7 +70,7 @@ jobs:
 
     - name: Package Helm chart
       run: |
-        helm package charts/kyverno-policies --destination ./
+        helm package kyverno-policies --destination ./
 
     - name: Checkout gh-pages branch
       uses: actions/checkout@v3
