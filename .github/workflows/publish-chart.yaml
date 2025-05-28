@@ -163,18 +163,14 @@ jobs:
         TEMP_DIR=$(mktemp -d)
         tar -xzf "$CHART_FILE" -C "$TEMP_DIR"
         
-        # Verify each policy file
-        for policy in "$TEMP_DIR"/kyverno-policies/templates/*.yaml; do
-          echo "Verifying policy: $policy"
-          if [ -f "$policy" ]; then
-            # Basic YAML validation
-            if ! yq eval '.' "$policy" > /dev/null 2>&1; then
-              echo "Error: Invalid YAML in $policy"
-              exit 1
-            fi
-            echo "Policy $policy is valid YAML"
-          fi
-        done
+        # Verify the chart by rendering templates and validating the output
+        echo "Validating rendered Helm templates..."
+        cd "$TEMP_DIR"
+        if ! helm template test kyverno-policies | yq eval '.' > /dev/null 2>&1; then
+          echo "Error: Invalid rendered YAML from Helm templates"
+          exit 1
+        fi
+        echo "All rendered templates are valid YAML"
         
         # Clean up
         rm -rf "$TEMP_DIR"
