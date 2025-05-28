@@ -36,10 +36,10 @@ spec:
             all:
             - key: livenessProbe
               operator: AllNotIn
-              value: {{ printf "\"{{ element.keys(@)[] }}\"" }}
+              value: "{{ `{{ element.keys(@)[] }}` }}"
             - key: startupProbe
               operator: AllNotIn
-              value: {{ printf "\"{{ element.keys(@)[] }}\"" }}
+              value: "{{ `{{ element.keys(@)[] }}` }}"
             - key: readinessProbe
               operator: AllNotIn
-              value: {{ printf "\"{{ element.keys(@)[] }}\"" }}
+              value: "{{ `{{ element.keys(@)[] }}` }}"
