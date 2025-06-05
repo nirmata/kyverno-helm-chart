@@ -48,7 +48,7 @@ jobs:
         git rm -rf .
         
         # Create initial index.yaml
-        helm repo index . --url https://nirmata.github.io/tennet-helm-chart/
+        helm repo index . --url https://nirmata.github.io/kyverno-helm-chart/
         
         # Commit and force push
         git add index.yaml
@@ -135,7 +135,7 @@ jobs:
       run: |
         cd gh-pages
         echo "Updating Helm repository index..."
-        helm repo index . --url https://nirmata.github.io/tennet-helm-chart/
+        helm repo index . --url https://nirmata.github.io/kyverno-helm-chart/
         echo "Contents of index.yaml:"
         cat index.yaml
 
