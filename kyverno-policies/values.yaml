@@ -1,1 +1,42 @@
-validationFailureAction: "Audit"
+# Default validation failure action for all policies
+# Possible values: Audit, Enforce
+# Note: Always start with Audit mode to monitor violations before enforcing
+validationFailureAction: Audit
+
+# Enable/Disable prod policies
+# Production policies include 36 security and compliance policies
+prod:
+  enabled: false
+
+# Enable/Disable non-prod policies
+# Non-production policies include 38 policies with additional monitoring
+nonProd:
+  enabled: true
+
+# Global settings
+global:
+  # Override validationFailureAction for all policies
+  # This can be set to "Enforce" for production environments
+  # Recommended: Start with Audit, then gradually move to Enforce
+  validationFailureAction: Audit
+
+# Installation settings
+# These help handle webhook timeout issues when installing many policies
+installation:
+  # Maximum number of retries if webhook validation fails
+  maxRetries: 3
+  # Wait time between retries (in seconds)
+  retryDelay: 10
+  # If true, policies will be applied even if some fail validation
+  # Useful when Kyverno webhook is experiencing timeouts
+  continueOnError: false
+
+# Per-policy configuration
+# Uncomment and customize as needed to override validation actions per policy
+# policies:
+#   prod:
+#     disallow-privileged-containers:
+#       validationFailureAction: Enforce
+#   nonProd:
+#     disallow-privileged-containers:
+#       validationFailureAction: Audit
