@@ -1,4 +1,3 @@
-{{- if .Values.nonProd.enabled }}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -15,9 +14,9 @@ metadata:
       capabilities should be dropped from a Pod, with only those required added back.
       This policy ensures that all containers explicitly specify the `drop: ["ALL"]`
       ability. Note that this policy also illustrates how to cover drop entries in any
-      case although this may not strictly conform to the Pod Security Standards.      
+      case although this may not strictly conform to the Pod Security Standards.
 spec:
-  validationFailureAction: {{ include "trinet-kyverno-policies.validationAction" . }}
+  validationFailureAction: Audit
   background: true
   rules:
     - name: require-drop-all
@@ -26,14 +25,12 @@ spec:
         - resources:
             kinds:
               - Pod
-      preconditions:
-        all:
-        - key: "{{ "{{" }} request.operation || 'BACKGROUND' {{ "}}" }}"
-          operator: NotEquals
-          value: DELETE
+            operations:
+            - CREATE
+            - UPDATE
       validate:
         message: >-
-          Containers must drop `ALL` capabilities.          
+          Containers must drop `ALL` capabilities.
         foreach:
           - list: request.object.spec.[ephemeralContainers, initContainers, containers][]
             deny:
@@ -41,6 +38,4 @@ spec:
                 all:
                 - key: ALL
                   operator: AnyNotIn
-                  value: "{{ "{{" }} element.securityContext.capabilities.drop[].to_upper(@) || `[]` {{ "}}" }}"
-
-{{- end }}
+                  value: {{ quote "{{ element.securityContext.capabilities.drop[].to_upper(@) || '[]' }}" }}

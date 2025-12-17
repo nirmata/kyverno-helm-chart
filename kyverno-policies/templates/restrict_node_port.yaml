@@ -1,4 +1,3 @@
-{{- if .Values.nonProd.enabled }}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -16,7 +15,7 @@ metadata:
       with additional upstream security checks. This policy validates that any new Services
       do not use the `NodePort` type.
 spec:
-  validationFailureAction: {{ include "trinet-kyverno-policies.validationAction" . }}
+  validationFailureAction: Audit
   background: true
   rules:
   - name: validate-nodeport
@@ -29,5 +28,3 @@ spec:
       pattern:
         spec:
           =(type): "!NodePort"
-
-{{- end }}

@@ -1,4 +1,3 @@
-{{- if .Values.nonProd.enabled }}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -19,7 +18,7 @@ metadata:
       This policy validates that all containers have one of livenessProbe, readinessProbe,
       or startupProbe defined.
 spec:
-  validationFailureAction: {{ include "trinet-kyverno-policies.validationAction" . }}
+  validationFailureAction: Audit
   background: true
   rules:
   - name: validate-probes
@@ -37,12 +36,10 @@ spec:
             all:
             - key: livenessProbe
               operator: AllNotIn
-              value: "{{ "{{" }} element.keys(@)[] {{ "}}" }}"
+              value: "{{ `{{ element.keys(@)[] }}` }}"
             - key: startupProbe
               operator: AllNotIn
-              value: "{{ "{{" }} element.keys(@)[] {{ "}}" }}"
+              value: "{{ `{{ element.keys(@)[] }}` }}"
             - key: readinessProbe
               operator: AllNotIn
-              value: "{{ "{{" }} element.keys(@)[] {{ "}}" }}"
-
-{{- end }}
+              value: "{{ `{{ element.keys(@)[] }}` }}"

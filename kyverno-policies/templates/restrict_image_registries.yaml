@@ -1,4 +1,3 @@
-{{- if .Values.nonProd.enabled }}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -17,7 +16,7 @@ metadata:
       policy validates that container images only originate from the registry `eu.foo.io` or
       `bar.io`. Use of this policy requires customization to define your allowable registries.
 spec:
-  validationFailureAction: {{ include "trinet-kyverno-policies.validationAction" . }}
+  validationFailureAction: Audit
   background: true
   rules:
   - name: validate-registries
@@ -36,5 +35,3 @@ spec:
           - image: "eu.foo.io/* | bar.io/*"
           containers:
           - image: "eu.foo.io/* | bar.io/*"
-
-{{- end }}

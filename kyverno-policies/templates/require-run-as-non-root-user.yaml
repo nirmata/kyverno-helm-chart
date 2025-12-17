@@ -1,4 +1,3 @@
-{{- if .Values.nonProd.enabled }}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -15,7 +14,7 @@ metadata:
       Containers must be required to run as non-root users. This policy ensures
       `runAsUser` is either unset or set to a number greater than zero.
 spec:
-  validationFailureAction: {{ include "trinet-kyverno-policies.validationAction" . }}
+  validationFailureAction: Audit
   background: true
   rules:
     - name: run-as-non-root-user
@@ -40,5 +39,3 @@ spec:
             containers:
               - =(securityContext):
                   =(runAsUser): ">0"
-
-{{- end }}
