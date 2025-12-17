@@ -1,0 +1,45 @@
+{{- if .Values.nonProd.enabled }}
+metadata:
+  name: "check-evicted-pods"
+  annotations:
+    policies.kyverno.io/category: "ephemeral-storage"
+    kyverno.io/kubernetes-version: "1.27"
+    kyverno.io/kyverno-version: "1.11.1"
+    policies.kyverno.io/severity: "medium"
+    pod-policies.kyverno.io/autogen-controllers: "none"
+    policies.kyverno.io/subject: "Node"
+    policies.kyverno.io/title: "Check evicted pods"
+apiVersion: "kyverno.io/v1"
+kind: "ClusterPolicy"
+spec:
+  validationFailureAction: "audit"
+  background: true
+  rules:
+  - preconditions:
+      all:
+      - value: "Running"
+        key: "{{ "{{" }} podphase {{ "}}" }}"
+        operator: "NotEquals"
+    name: "check-evicted-pods"
+    context:
+    - name: "podphase"
+      variable:
+        jmesPath: "request.object.status.phase || empty"
+    - name: "poderror"
+      variable:
+        jmesPath: "request.object.status.reason || empty"
+    match:
+      any:
+      - resources:
+          kinds:
+          - "Pod"
+    validate:
+      deny:
+        conditions:
+          any:
+          - value: "Evicted"
+            key: "{{ "{{" }} poderror {{ "}}" }}"
+            operator: "Equals"
+      message: "Pod `{{ "{{" }} request.object.metadata.name {{ "}}" }}` in `{{ "{{" }} request.namespace {{ "}}" }}`\
+        \ namespace is evicted."
+{{- end }}

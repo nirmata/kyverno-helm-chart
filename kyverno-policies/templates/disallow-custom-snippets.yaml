@@ -1,3 +1,4 @@
+{{- if .Values.nonProd.enabled }}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -16,7 +17,7 @@ metadata:
       blocks *-snippet annotations on an Ingress.
       See: https://github.com/kubernetes/ingress-nginx/issues/7837      
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ include "trinet-kyverno-policies.validationAction" . }}
   rules:
     - name: check-config-map
       match:
@@ -42,3 +43,4 @@ spec:
             =(annotations):
               X(*-snippet): "?*"
 
+{{- end }}
