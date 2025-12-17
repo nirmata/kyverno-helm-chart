@@ -21,3 +21,7 @@
 .idea/
 *.tmproj
 .vscode/
+# Invalid/corrupted policy files
+*404*
+*Not Found*
+*error*
