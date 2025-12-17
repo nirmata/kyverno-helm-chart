@@ -1,1 +1,1 @@
-# tennet-helm-chart
+# kyverno-policies-helm-chart
