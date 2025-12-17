@@ -1,0 +1,55 @@
+metadata:
+  name: "check-ephmeral-storage-capacity"
+  annotations:
+    policies.kyverno.io/category: "ephemeral-storage"
+    kyverno.io/kubernetes-version: "1.27"
+    policies.kyverno.io/description: "This policy monitors the allocatable ephemeral\
+      \ storage on nodes and reports if the available storage falls below a predefined\
+      \ threshold. The policy ensures that nodes maintain sufficient ephemeral storage\
+      \ for workload operations, helping to prevent potential issues caused by storage\
+      \ exhaustion. This policy does not enforce changes but provides reports when\
+      \ the threshold is breached, allowing administrators to take corrective actions\
+      \ before workloads are impacted.      "
+    kyverno.io/kyverno-version: "1.11.1"
+    policies.kyverno.io/severity: "medium"
+    policies.kyverno.io/subject: "Node"
+    policies.kyverno.io/title: "Check ephemeral Storage Capacity"
+apiVersion: "kyverno.io/v1"
+kind: "ClusterPolicy"
+spec:
+  validationFailureAction: "Audit"
+  background: true
+  rules:
+  - name: "check-ephemeral-storage-capacity"
+    match:
+      any:
+      - resources:
+          kinds:
+          - "Node"
+    context:
+    - name: "nodecapacity"
+      apiCall:
+        jmesPath: "status.capacity.\"ephemeral-storage\""
+        urlPath: "/api/v1/nodes/{{request.object.metadata.name}}"
+    - name: "nodeavailable"
+      apiCall:
+        jmesPath: "status.allocatable.\"ephemeral-storage\""
+        urlPath: "/api/v1/nodes/{{request.object.metadata.name}}"
+    - name: "availablecapacity"
+      variable:
+        jmesPath: "divide('{{ nodeavailable }}', '{{ nodecapacity }}')"
+    - name: "availablecappercent"
+      variable:
+        jmesPath: "multiply(` {{ availablecapacity }}`, `100`)"
+    validate:
+      foreach:
+      - deny:
+          conditions:
+            any:
+            - message: "node capacity is {{ round(`{{ availablecappercent }}`, `2`)\
+                \ }}%"
+              value: 0.3
+              key: "{{ divide('{{ nodeavailable }}', '{{ nodecapacity }}') }}"
+              operator: "LessThanOrEquals"
+        list: "request.object"
+      message: "Node ephemeral-storage capacity reaching limits."
