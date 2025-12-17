@@ -17,7 +17,7 @@ spec:
   - preconditions:
       all:
       - value: "Running"
-        key: "{{ podphase }}"
+        key: "{{ "{{" }} podphase {{ "}}" }}"
         operator: "NotEquals"
     name: "check-evicted-pods"
     context:
@@ -37,7 +37,7 @@ spec:
         conditions:
           any:
           - value: "Evicted"
-            key: "{{poderror}}"
+            key: "{{ "{{" }}poderror{{ "}}" }}"
             operator: "Equals"
-      message: "Pod `{{request.object.metadata.name}}` in `{{request.namespace}}`\
+      message: "Pod `{{ "{{" }}request.object.metadata.name{{ "}}" }}` in `{{ "{{" }}request.namespace{{ "}}" }}`\
         \ namespace is evicted."

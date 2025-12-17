@@ -28,7 +28,7 @@ spec:
               - Job
       preconditions:
         any:
-          - key: "{{ request.object.metadata.ownerReferences || `[]` }}"
+          - key: "{{ "{{" }} request.object.metadata.ownerReferences || `[]` {{ "}}" }}"
             operator: Equals
             value: []
       mutate:

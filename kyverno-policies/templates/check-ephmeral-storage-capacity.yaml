@@ -30,26 +30,26 @@ spec:
     - name: "nodecapacity"
       apiCall:
         jmesPath: "status.capacity.\"ephemeral-storage\""
-        urlPath: "/api/v1/nodes/{{request.object.metadata.name}}"
+        urlPath: "/api/v1/nodes/{{ "{{" }}request.object.metadata.name{{ "}}" }}"
     - name: "nodeavailable"
       apiCall:
         jmesPath: "status.allocatable.\"ephemeral-storage\""
-        urlPath: "/api/v1/nodes/{{request.object.metadata.name}}"
+        urlPath: "/api/v1/nodes/{{ "{{" }}request.object.metadata.name{{ "}}" }}"
     - name: "availablecapacity"
       variable:
-        jmesPath: "divide('{{ nodeavailable }}', '{{ nodecapacity }}')"
+        jmesPath: "divide('{{ "{{" }} nodeavailable {{ "}}" }}', '{{ "{{" }} nodecapacity {{ "}}" }}')"
     - name: "availablecappercent"
       variable:
-        jmesPath: "multiply(` {{ availablecapacity }}`, `100`)"
+        jmesPath: "multiply(` {{ "{{" }} availablecapacity {{ "}}" }}`, `100`)"
     validate:
       foreach:
       - deny:
           conditions:
             any:
-            - message: "node capacity is {{ round(`{{ availablecappercent }}`, `2`)\
-                \ }}%"
+            - message: "node capacity is {{ "{{" }} round(`{{ "{{" }} availablecappercent {{ "}}" }}`, `2`)\
+                \ {{ "}}" }}%"
               value: 0.3
-              key: "{{ divide('{{ nodeavailable }}', '{{ nodecapacity }}') }}"
+              key: "{{ "{{" }} divide('{{ "{{" }} nodeavailable {{ "}}" }}', '{{ "{{" }} nodecapacity {{ "}}" }}') {{ "}}" }}"
               operator: "LessThanOrEquals"
         list: "request.object"
       message: "Node ephemeral-storage capacity reaching limits."
