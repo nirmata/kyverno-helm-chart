@@ -14,7 +14,7 @@ metadata:
       hostname for each rule defined.
 spec:
   validationFailureAction: Audit
-  background: false
+  background: true
   rules:
     - name: disallow-empty-ingress-host
       match:
