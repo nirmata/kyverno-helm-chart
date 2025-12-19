@@ -1,3 +1,14 @@
 apiVersion: v1
-entries: {}
-generated: "2025-12-19T18:13:22.333383199Z"
+entries:
+  kyverno-policies:
+  - apiVersion: v2
+    appVersion: "1.0"
+    created: "2025-12-19T18:13:23.8943631Z"
+    description: A Helm chart to deploy kyverno policies for TenneT
+    digest: 7d2480e9ddaa415bfbe6e05d23d3a645c5555a46fc4432491e918cdb6900834a
+    name: kyverno-policies
+    type: application
+    urls:
+    - https://nirmata.github.io/kyverno-helm-chart/kyverno-policies-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-12-19T18:13:23.893399873Z"
