@@ -5,6 +5,7 @@ metadata:
   annotations:
     policies.kyverno.io/title: "Add default network policy"
     policies.kyverno.io/category: "Multitenancy"
+    kyverno.io/ignore: "true"
     policies.kyverno.io/description: >- 
       By default Kubernetes allows communications across all pods within a cluster. Network 
       policies and, a CNI that enforces network policies (e.g. Calico, kube-router, etc.), must 

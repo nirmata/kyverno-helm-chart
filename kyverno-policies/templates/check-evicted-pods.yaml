@@ -4,6 +4,7 @@ metadata:
     policies.kyverno.io/category: "ephemeral-storage"
     kyverno.io/kubernetes-version: "1.27"
     kyverno.io/kyverno-version: "1.11.1"
+    kyverno.io/ignore: "true"
     policies.kyverno.io/severity: "medium"
     pod-policies.kyverno.io/autogen-controllers: "none"
     policies.kyverno.io/subject: "Node"

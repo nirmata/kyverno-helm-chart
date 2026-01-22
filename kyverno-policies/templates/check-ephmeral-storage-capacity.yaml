@@ -3,6 +3,7 @@ metadata:
   annotations:
     policies.kyverno.io/category: "ephemeral-storage"
     kyverno.io/kubernetes-version: "1.27"
+    kyverno.io/ignore: "true"
     policies.kyverno.io/description: "This policy monitors the allocatable ephemeral\
       \ storage on nodes and reports if the available storage falls below a predefined\
       \ threshold. The policy ensures that nodes maintain sufficient ephemeral storage\

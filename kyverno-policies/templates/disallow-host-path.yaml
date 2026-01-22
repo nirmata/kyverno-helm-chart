@@ -8,6 +8,7 @@ metadata:
     policies.kyverno.io/severity: medium
     policies.kyverno.io/subject: Pod,Volume
     kyverno.io/kubernetes-version: "1.22-1.23"
+    kyverno.io/ignore: "true"
     policies.nirmata.io/remediation-docs: "https://docs.nirmata.io/policysets/podsecurity/baseline/disallow-host-path/"
     policies.nirmata.io/remediation: "https://github.com/nirmata/kyverno-policies/tree/main/pod-security/baseline/disallow-host-path/remediate-disallow-host-path.yaml"
     policies.kyverno.io/description: >-

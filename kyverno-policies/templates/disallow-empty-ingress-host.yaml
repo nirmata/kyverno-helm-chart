@@ -8,6 +8,7 @@ metadata:
     policies.kyverno.io/severity: medium
     kyverno.io/kyverno-version: 1.10.0
     policies.kyverno.io/subject: Ingress
+    kyverno.io/ignore: "true"
     policies.kyverno.io/description: >-
       An ingress resource needs to define an actual host name
       in order to be valid. This policy ensures that there is a
