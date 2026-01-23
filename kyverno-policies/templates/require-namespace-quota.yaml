@@ -2,7 +2,8 @@ apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: require-namespace-quota
-  kyverno.io/ignore: "true"
+  annotations:
+    kyverno.io/ignore: "true"
 spec:
   validationFailureAction: Audit
   background: true

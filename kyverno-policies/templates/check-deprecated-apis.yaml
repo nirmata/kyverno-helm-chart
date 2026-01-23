@@ -1,3 +1,4 @@
+{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -17,6 +18,7 @@ spec:
   validationFailureAction: Audit
   background: true
   rules:
+{{- if semverCompare "<1.22-0" .Capabilities.KubeVersion.Version }}
   - name: validate-v1-22-removals
     match:
       any:
@@ -51,6 +53,7 @@ spec:
         {{ "{{" }} request.object.apiVersion {{ "}}" }}/{{ "{{" }} request.object.kind {{ "}}" }} is deprecated and will be removed in v1.22.
         See: https://kubernetes.io/docs/reference/using-api/deprecation-guide/
       deny: {}
+{{- end }}
   - name: validate-v1-25-removals
     match:
       any:
@@ -67,3 +70,4 @@ spec:
         {{ "{{" }} request.object.apiVersion {{ "}}" }}/{{ "{{" }} request.object.kind {{ "}}" }} is deprecated and will be removed in v1.25.
         See: https://kubernetes.io/docs/reference/using-api/deprecation-guide/
       deny: {}
+{{- end }}
