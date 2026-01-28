@@ -21,10 +21,10 @@ cd kyverno-policies
 ./validate-templates.sh
 
 # Install with default values (Audit mode)
-helm install trinet-policies . --namespace kyverno --create-namespace
+helm install sample-policies . --namespace kyverno --create-namespace
 
 # Or with custom values
-helm install trinet-policies . \
+helm install sample-policies . \
   --namespace kyverno \
   --create-namespace \
   --set validationFailureAction=Enforce
@@ -67,12 +67,12 @@ kubectl patch validatingwebhookconfiguration kyverno-policy-validating-webhook-c
   --type='json' -p='[{"op": "replace", "path": "/webhooks/0/timeoutSeconds", "value": 30}]'
 
 # Then retry
-helm install trinet-policies . --namespace kyverno --timeout 10m
+helm install sample-policies . --namespace kyverno --timeout 10m
 ```
 
 **Alternative - Apply Directly:**
 ```bash
-helm template trinet-policies . --namespace kyverno > /tmp/policies.yaml
+helm template sample-policies . --namespace kyverno > /tmp/policies.yaml
 kubectl apply -f /tmp/policies.yaml --server-side --force-conflicts
 ```
 
@@ -87,7 +87,7 @@ invalid ownership metadata; missing key "app.kubernetes.io/managed-by"
 
 **Quick Fix:**
 ```bash
-./fix-helm-ownership.sh trinet-policies kyverno
+./fix-helm-ownership.sh sample-policies kyverno
 ```
 
 This adds the required Helm labels and annotations to existing policies.
@@ -118,6 +118,5 @@ kyverno-helm-chart/
 
 ## Related Repositories
 
-- [TriNet Private Repo](../trinet-private-repo) - Complete Helm chart with template generation
 - [Kyverno Policy Helm Chart](https://github.com/nirmata/kyverno-policy-helm-chart) - Reference implementation
 
