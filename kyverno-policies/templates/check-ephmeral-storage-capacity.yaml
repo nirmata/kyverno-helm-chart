@@ -1,9 +1,11 @@
 metadata:
   name: "check-ephmeral-storage-capacity"
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/category: "ephemeral-storage"
     kyverno.io/kubernetes-version: "1.27"
-    kyverno.io/ignore: "true"
     policies.kyverno.io/description: "This policy monitors the allocatable ephemeral\
       \ storage on nodes and reports if the available storage falls below a predefined\
       \ threshold. The policy ensures that nodes maintain sufficient ephemeral storage\
@@ -18,7 +20,7 @@ metadata:
 apiVersion: "kyverno.io/v1"
 kind: "ClusterPolicy"
 spec:
-  validationFailureAction: "Audit"
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   background: true
   rules:
   - name: "check-ephemeral-storage-capacity"

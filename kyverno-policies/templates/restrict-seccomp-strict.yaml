@@ -3,23 +3,32 @@ kind: ClusterPolicy
 metadata:
   name: restrict-seccomp-strict
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/title: Restrict Seccomp (Strict)
     policies.kyverno.io/category: Pod Security Standards (Restricted)
-    policies.kyverno.io/severity: medium
+    policies.kyverno.io/severity: high
     policies.kyverno.io/subject: Pod
-    kyverno.io/kyverno-version: 1.10.0
     kyverno.io/kubernetes-version: "1.22-1.23"
-    kyverno.io/ignore: "true"
     policies.nirmata.io/remediation-docs: "https://docs.nirmata.io/policysets/podsecurity/restricted/restrict-seccomp-strict/"
+    policies.nirmata.io/remediation: "https://github.com/nirmata/kyverno-policies/tree/main/pod-security/restricted/restrict-seccomp-strict/remediate-restrict-seccomp-strict.yaml"
+    policies.kyverno.io/standards: "cis-eks,cis-kubernetes,cis-aks,cis-gke,soc2,iso27001,pci-dss,nsa-cisa,nist-800-53"
+    policies.nirmata.io/nsa-cisa-control: "Sec.1.4"
+    policies.nirmata.io/nist-800-53-control: "CM-7,SI-3"
     policies.kyverno.io/description: >-
       The seccomp profile in the Restricted group must not be explicitly set to Unconfined
       but additionally must also not allow an unset value. This policy, 
-      requiring Kubernetes v1.19 or later, ensures that seccomp is 
-      set to `RuntimeDefault` or `Localhost`. A known issue prevents a policy such as this
+      requiring Kubernetes v1.19 or later, ensures that the fields
+      spec.securityContext.seccompProfile.type,
+      spec.containers[*].securityContext.seccompProfile.type,
+      spec.initContainers[*].securityContext.seccompProfile.type, and
+      spec.ephemeralContainers[*].securityContext.seccompProfile.type
+      is set to `RuntimeDefault` or `Localhost`. A known issue prevents a policy such as this
       using `anyPattern` from being persisted properly in Kubernetes 1.23.0-1.23.2.
 spec:
   background: true
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   rules:
     - name: check-seccomp-strict
       match:

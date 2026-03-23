@@ -1,73 +1,144 @@
-{{- if semverCompare "<1.25-0" .Capabilities.KubeVersion.Version }}
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
   name: check-deprecated-apis
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/title: Check deprecated APIs
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/subject: Kubernetes APIs
-    kyverno.io/ignore: "true"
+    kyverno.io/kyverno-version: 1.7.4
+    policies.kyverno.io/minversion: 1.7.4
+    kyverno.io/kubernetes-version: "1.23"
     policies.kyverno.io/description: >-
       Kubernetes APIs are sometimes deprecated and removed after a few releases.
       As a best practice, older API versions should be replaced with newer versions.
       This policy validates for APIs that are deprecated or scheduled for removal.
       Note that checking for some of these resources may require modifying the Kyverno
-      ConfigMap to remove filters.
+      ConfigMap to remove filters. In the validate-v1-22-removals rule, the Lease kind
+      has been commented out due to a check for this kind having a performance penalty
+      on Kubernetes clusters with many leases. Its enabling should be attended carefully
+      and is not recommended on large clusters. PodSecurityPolicy is removed in v1.25
+      so therefore the validate-v1-25-removals rule may not completely work on 1.25+.
+      This policy requires Kyverno v1.7.4+ to function properly.
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   background: true
   rules:
-{{- if semverCompare "<1.22-0" .Capabilities.KubeVersion.Version }}
-  - name: validate-v1-22-removals
-    match:
-      any:
-      - resources:
-          kinds:
-          # Note: admissionregistration.k8s.io/v1beta1/ValidatingWebhookConfiguration and MutatingWebhookConfiguration
-          # were removed in Kubernetes 1.22+ and cannot be validated by Kyverno
-          # Note: apiextensions.k8s.io/v1beta1/CustomResourceDefinition was also removed in Kubernetes 1.22+
-          # and cannot be validated by Kyverno
-          # Note: apiregistration.k8s.io/v1beta1/APIService was also removed in Kubernetes 1.22+
-          # and cannot be validated by Kyverno
-          - authentication.k8s.io/v1beta1/TokenReview
-          - authorization.k8s.io/v1beta1/SubjectAccessReview
-          - authorization.k8s.io/v1beta1/LocalSubjectAccessReview
-          - authorization.k8s.io/v1beta1/SelfSubjectAccessReview
-          - certificates.k8s.io/v1beta1/CertificateSigningRequest
-          - coordination.k8s.io/v1beta1/Lease
-          - extensions/v1beta1/Ingress
-          - networking.k8s.io/v1beta1/Ingress
-          - networking.k8s.io/v1beta1/IngressClass
-          - rbac.authorization.k8s.io/v1beta1/ClusterRole
-          - rbac.authorization.k8s.io/v1beta1/ClusterRoleBinding
-          - rbac.authorization.k8s.io/v1beta1/Role
-          - rbac.authorization.k8s.io/v1beta1/RoleBinding
-          - scheduling.k8s.io/v1beta1/PriorityClass
-          - storage.k8s.io/v1beta1/CSIDriver
-          - storage.k8s.io/v1beta1/CSINode
-          - storage.k8s.io/v1beta1/StorageClass
-          - storage.k8s.io/v1beta1/VolumeAttachment
-    validate:
-      message: >-
-        {{ "{{" }} request.object.apiVersion {{ "}}" }}/{{ "{{" }} request.object.kind {{ "}}" }} is deprecated and will be removed in v1.22.
-        See: https://kubernetes.io/docs/reference/using-api/deprecation-guide/
-      deny: {}
-{{- end }}
   - name: validate-v1-25-removals
     match:
       any:
       - resources:
+          # NOTE: PodSecurityPolicy is completely removed in 1.25.
           kinds:
-          - batch/v1beta1/CronJob
-          - discovery.k8s.io/v1beta1/EndpointSlice
-          - events.k8s.io/v1beta1/Event
-          - policy/v1beta1/PodDisruptionBudget
-          - policy/v1beta1/PodSecurityPolicy
-          - node.k8s.io/v1beta1/RuntimeClass
+          - batch/*/CronJob
+          - discovery.k8s.io/*/EndpointSlice
+          - events.k8s.io/*/Event
+          - policy/*/PodDisruptionBudget
+          - policy/*/PodSecurityPolicy
+          - node.k8s.io/*/RuntimeClass
+    preconditions:
+      all:
+      - key: "{{ "{{" }} request.operation || 'BACKGROUND' {{ "}}" }}"
+        operator: NotEquals
+        value: DELETE
+      - key: "{{ "{{" }} request.object.apiVersion {{ "}}" }}"
+        operator: AnyIn
+        value:
+        - batch/v1beta1
+        - discovery.k8s.io/v1beta1
+        - events.k8s.io/v1beta1
+        - policy/v1beta1
+        - node.k8s.io/v1beta1
     validate:
       message: >-
         {{ "{{" }} request.object.apiVersion {{ "}}" }}/{{ "{{" }} request.object.kind {{ "}}" }} is deprecated and will be removed in v1.25.
         See: https://kubernetes.io/docs/reference/using-api/deprecation-guide/
       deny: {}
-{{- end }}
+  - name: validate-v1-26-removals
+    match:
+      any:
+      - resources:
+          kinds:
+          - flowcontrol.apiserver.k8s.io/*/FlowSchema
+          - flowcontrol.apiserver.k8s.io/*/PriorityLevelConfiguration
+          - autoscaling/*/HorizontalPodAutoscaler
+    preconditions:
+      all:
+      - key: "{{ "{{" }} request.operation || 'BACKGROUND' {{ "}}" }}"
+        operator: NotEquals
+        value: DELETE
+      - key: "{{ "{{" }} request.object.apiVersion {{ "}}" }}"
+        operator: AnyIn
+        value:
+        - flowcontrol.apiserver.k8s.io/v1beta1
+        - autoscaling/v2beta2
+    validate:
+      message: >-
+        {{ "{{" }} request.object.apiVersion {{ "}}" }}/{{ "{{" }} request.object.kind {{ "}}" }} is deprecated and will be removed in v1.26.
+        See: https://kubernetes.io/docs/reference/using-api/deprecation-guide/
+      deny: {}
+  - name: validate-v1-27-removals
+    match:
+      any:
+      - resources:
+          kinds:
+          - storage.k8s.io/*/CSIStorageCapacity
+    preconditions:
+      all:
+      - key: "{{ "{{" }} request.operation || 'BACKGROUND' {{ "}}" }}"
+        operator: NotEquals
+        value: DELETE
+      - key: "{{ "{{" }} request.object.apiVersion {{ "}}" }}"
+        operator: AnyIn
+        value:
+        - storage.k8s.io/v1beta1
+    validate:
+      message: >-
+        {{ "{{" }} request.object.apiVersion {{ "}}" }}/{{ "{{" }} request.object.kind {{ "}}" }} is deprecated and will be removed in v1.27.
+        See: https://kubernetes.io/docs/reference/using-api/deprecation-guide/
+      deny: {}
+  - name: validate-v1-29-removals
+    match:
+      any:
+      - resources:
+          kinds:
+          - flowcontrol.apiserver.k8s.io/*/FlowSchema
+          - flowcontrol.apiserver.k8s.io/*/PriorityLevelConfiguration
+    preconditions:
+      all:
+      - key: "{{ "{{" }} request.operation || 'BACKGROUND' {{ "}}" }}"
+        operator: NotEquals
+        value: DELETE
+      - key: "{{ "{{" }} request.object.apiVersion {{ "}}" }}"
+        operator: AnyIn
+        value:
+        - flowcontrol.apiserver.k8s.io/v1beta2
+    validate:
+      message: >-
+        {{ "{{" }} request.object.apiVersion {{ "}}" }}/{{ "{{" }} request.object.kind {{ "}}" }} is deprecated and will be removed in v1.29.
+        See: https://kubernetes.io/docs/reference/using-api/deprecation-guide/
+      deny: {}
+  - name: validate-v1-32-removals
+    match:
+      any:
+      - resources:
+          kinds:
+          - flowcontrol.apiserver.k8s.io/*/FlowSchema
+          - flowcontrol.apiserver.k8s.io/*/PriorityLevelConfiguration
+    preconditions:
+      all:
+      - key: "{{ "{{" }} request.operation || 'BACKGROUND' {{ "}}" }}"
+        operator: NotEquals
+        value: DELETE
+      - key: "{{ "{{" }} request.object.apiVersion {{ "}}" }}"
+        operator: AnyIn
+        value:
+        -  flowcontrol.apiserver.k8s.io/v1beta3
+    validate:
+      message: >-
+        {{ "{{" }} request.object.apiVersion {{ "}}" }}/{{ "{{" }} request.object.kind {{ "}}" }} is deprecated and will be removed in v1.32.
+        See: https://kubernetes.io/docs/reference/using-api/deprecation-guide/
+      deny: {}

@@ -3,18 +3,24 @@ kind: ClusterPolicy
 metadata:
   name: disallow-selinux
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/title: Disallow SELinux
     policies.kyverno.io/category: Pod Security Standards (Baseline)
-    policies.kyverno.io/severity: medium
+    policies.kyverno.io/severity: high
     policies.kyverno.io/subject: Pod
     kyverno.io/kubernetes-version: "1.22-1.23"
-    kyverno.io/ignore: "true"
     policies.nirmata.io/remediation-docs: "https://docs.nirmata.io/policysets/podsecurity/baseline/disallow-selinux/"
+    policies.kyverno.io/standards: "cis-eks,cis-kubernetes,cis-aks,cis-gke,nsa-cisa,nist-800-53"
+    policies.nirmata.io/nsa-cisa-control: "Sec.1.4"
+    policies.nirmata.io/nist-800-53-control: "CM-7"
     policies.kyverno.io/description: >-
-      SELinux options can be used to escalate privileges and should not be allowed. This policy
-      ensures that the `seLinuxOptions` field is undefined.
+      SELinux options can be used to escalate privileges and should not be allowed. This policy ensures that the fields
+      spec.securityContext.seLinuxOptions.type, spec.containers[*].securityContext.seLinuxOptions.type, spec.initContainers[*].securityContext.seLinuxOptions, and spec.ephemeralContainers[*].securityContext.seLinuxOptions.type
+      must either be unset or set to one of the allowed values (container_t, container_init_t, or container_kvm_t).
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   background: true
   rules:
     - name: selinux-type

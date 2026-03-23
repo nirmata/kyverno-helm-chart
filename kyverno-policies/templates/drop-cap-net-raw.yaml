@@ -3,13 +3,15 @@ kind: ClusterPolicy
 metadata:
   name: drop-cap-net-raw
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/title: Drop CAP_NET_RAW
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/minversion: 1.6.0
     kyverno.io/kyverno-version: 1.10.0
     policies.kyverno.io/severity: medium
     policies.kyverno.io/subject: Pod
-    kyverno.io/ignore: "true"
     policies.kyverno.io/description: >-
       Capabilities permit privileged actions without giving full root access. The
       CAP_NET_RAW capability, enabled by default, allows processes in a container to
@@ -18,7 +20,7 @@ metadata:
       ability. Note that this policy also illustrates how to cover drop entries in any
       case although this may not strictly conform to the Pod Security Standards.
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   background: true
   rules:
     - name: require-drop-cap-net-raw

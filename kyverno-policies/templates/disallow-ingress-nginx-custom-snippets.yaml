@@ -3,13 +3,15 @@ kind: ClusterPolicy
 metadata:
   name: disallow-ingress-nginx-custom-snippets
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/title: Disallow Custom Snippets
     policies.kyverno.io/category: Workload Security
     policies.kyverno.io/subject: ConfigMap, Ingress
     policies.kyverno.io/minversion: "1.6.0"
     kyverno.io/kyverno-version: 1.10.0
     kyverno.io/kubernetes-version: "1.23"
-    kyverno.io/ignore: "true"
     policies.kyverno.io/description: >-
       Users that can create or update ingress objects can use the custom snippets 
       feature to obtain all secrets in the cluster (CVE-2021-25742). This policy 
@@ -17,7 +19,7 @@ metadata:
       blocks *-snippet annotations on an Ingress.
       See: https://github.com/kubernetes/ingress-nginx/issues/7837      
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   rules:
     - name: check-config-map
       match:

@@ -1,6 +1,9 @@
 metadata:
   name: "require-ephemeral-storage-requests-limits"
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/category: "Ephemeral-storage"
     policies.kyverno.io/description: "As application workloads share cluster resources,\
       \ it is important to limit resources requested and consumed by each Pod. It\
@@ -10,11 +13,10 @@ metadata:
     policies.kyverno.io/severity: "medium"
     policies.kyverno.io/subject: "Pod"
     policies.kyverno.io/title: "Require Limits and Requests"
-    kyverno.io/ignore: "true"
 apiVersion: "kyverno.io/v1"
 kind: "ClusterPolicy"
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   background: true
   rules:
   - name: "validate-resources-ephemeral-storage"

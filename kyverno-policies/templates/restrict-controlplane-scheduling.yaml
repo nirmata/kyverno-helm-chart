@@ -3,6 +3,9 @@ kind: ClusterPolicy
 metadata:
   name: restrict-controlplane-scheduling
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/title: Restrict control plane scheduling
     policies.kyverno.io/category: Sample
     policies.kyverno.io/subject: Pod
@@ -15,7 +18,7 @@ metadata:
       in a Pod spec which allows running on control plane nodes
       with the taint key `node-role.kubernetes.io/master`.
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   background: true
   rules:
   - name: restrict-controlplane-scheduling-master

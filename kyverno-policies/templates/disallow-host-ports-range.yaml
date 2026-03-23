@@ -3,6 +3,9 @@ kind: ClusterPolicy
 metadata:
   name: disallow-host-ports-range
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/title: Disallow hostPorts Range (Alternate)
     policies.kyverno.io/category: Pod Security Standards (Baseline)
     policies.kyverno.io/severity: medium
@@ -16,7 +19,7 @@ metadata:
       allowed, or at minimum restricted to a known list. This policy ensures the `hostPort`
       field is set to one in the designated list. 
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   background: true
   rules:
     - name: host-port-range

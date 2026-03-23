@@ -1,0 +1,34 @@
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+    name: restrict-nodeport
+    annotations:
+        {{- if .Values.installation.ignoreOnInstall }}
+        kyverno.io/ignore: "true"
+        {{- end }}
+        policies.kyverno.io/title: Disallow NodePort
+        policies.kyverno.io/category: Best Practices
+        policies.kyverno.io/severity: medium
+        policies.kyverno.io/subject: Service
+        policies.kyverno.io/standards: "cis-eks,cis-kubernetes,cis-aks,cis-gke,nsa-cisa,nist-800-53"
+        policies.nirmata.io/nsa-cisa-control: "Sec.2.1"
+        policies.nirmata.io/nist-800-53-control: "SC-7,CM-7"
+        policies.kyverno.io/description: >-
+            A Kubernetes Service of type NodePort uses a host port to receive traffic from any source. A NetworkPolicy cannot be used to control traffic to host ports. Although NodePort Services can be useful, their use must be limited to Services with additional upstream security checks. This policy validates that any new Services do not use the `NodePort` type.
+spec:
+    validationActions:
+{{- if eq (.Values.validationFailureAction | default "Audit") "Enforce" }}
+        - Deny
+{{- else }}
+        - Audit
+{{- end }}
+
+    matchConstraints:
+        resourceRules:
+            - apiGroups: [""]
+              apiVersions: ["v1"]
+              resources: ["services"]
+              operations: ["CREATE", "UPDATE"]
+    validations:
+        - expression: "!has(object.spec.type) || object.spec.type != 'NodePort'"
+          message: "Services of type NodePort are not allowed."

@@ -3,9 +3,11 @@ kind: ClusterPolicy
 metadata:
   name: require-namespace-quota
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
     kyverno.io/ignore: "true"
+    {{- end }}
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   background: true
   rules:
   - name: ensure-essential-resource-quotas

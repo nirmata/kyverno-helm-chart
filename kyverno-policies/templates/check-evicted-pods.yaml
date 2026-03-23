@@ -1,10 +1,12 @@
 metadata:
   name: "check-evicted-pods"
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/category: "ephemeral-storage"
     kyverno.io/kubernetes-version: "1.27"
     kyverno.io/kyverno-version: "1.11.1"
-    kyverno.io/ignore: "true"
     policies.kyverno.io/severity: "medium"
     pod-policies.kyverno.io/autogen-controllers: "none"
     policies.kyverno.io/subject: "Node"
@@ -12,7 +14,7 @@ metadata:
 apiVersion: "kyverno.io/v1"
 kind: "ClusterPolicy"
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   background: true
   rules:
   - preconditions:
@@ -38,7 +40,7 @@ spec:
         conditions:
           any:
           - value: "Evicted"
-            key: "{{ "{{" }}poderror{{ "}}" }}"
+            key: "{{ "{{" }} poderror {{ "}}" }}"
             operator: "Equals"
-      message: "Pod `{{ "{{" }}request.object.metadata.name{{ "}}" }}` in `{{ "{{" }}request.namespace{{ "}}" }}`\
+      message: "Pod `{{ "{{" }} request.object.metadata.name {{ "}}" }}` in `{{ "{{" }} request.namespace {{ "}}" }}`\
         \ namespace is evicted."

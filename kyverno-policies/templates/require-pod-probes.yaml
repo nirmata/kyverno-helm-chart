@@ -1,0 +1,42 @@
+apiVersion: policies.kyverno.io/v1alpha1
+kind: ValidatingPolicy
+metadata:
+    name: require-pod-probes
+    annotations:
+        {{- if .Values.installation.ignoreOnInstall }}
+        kyverno.io/ignore: "true"
+        {{- end }}
+        policies.kyverno.io/title: Require Pod Probes
+        policies.kyverno.io/category: Best Practices, EKS Best Practices
+        policies.kyverno.io/severity: medium
+        policies.kyverno.io/subject: Pod
+        policies.kyverno.io/standards: "cis-eks,cis-kubernetes,cis-aks,cis-gke,nsa-cisa,nist-800-53"
+        policies.nirmata.io/nist-800-53-control: "SI-2"
+        policies.kyverno.io/description: >-
+            Liveness and readiness probes need to be configured to correctly manage a Pod's lifecycle during deployments, restarts, and upgrades. For each Pod, a periodic `livenessProbe` is performed by the kubelet to determine if the Pod's containers are running or need to be restarted. A `readinessProbe` is used by Services and Deployments to determine if the Pod is ready to receive network traffic. This policy validates that all containers have one of livenessProbe, readinessProbe, or startupProbe defined.
+spec:
+    validationActions:
+{{- if eq (.Values.validationFailureAction | default "Audit") "Enforce" }}
+        - Deny
+{{- else }}
+        - Audit
+{{- end }}
+
+    autogen:
+        podControllers:
+            controllers:
+                - DaemonSet
+                - Deployment
+                - StatefulSet
+    evaluation:
+        background:
+            enabled: true
+    matchConstraints:
+        resourceRules:
+            - apiGroups: [""]
+              apiVersions: ["v1"]
+              resources: ["pods"]
+              operations: ["CREATE", "UPDATE"]
+    validations:
+        - expression: "object.spec.containers.all(c, has(c.livenessProbe) || has(c.readinessProbe) || has(c.startupProbe))"
+          message: "Liveness, readiness, or startup probes are required for all containers."

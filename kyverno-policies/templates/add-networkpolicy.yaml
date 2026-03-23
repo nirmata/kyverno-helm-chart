@@ -1,0 +1,38 @@
+# Aligned with:
+# https://github.com/nirmata/kyverno-policies/blob/b644da2c2c080e6a8e15381fddb11c125ee86f26/charts/multitenancy/pols/add-network-policy.yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-network-policy
+  annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
+    policies.kyverno.io/title: Add default network policy
+    policies.kyverno.io/category: Multitenancy
+    policies.kyverno.io/description: >-
+      By default Kubernetes allows communications across all pods within a cluster. Network
+      policies and, a CNI that enforces network policies (e.g. Calico, kube-router, etc.), must
+      be used to restrict communinications. A default NetworkPolicy should be configured for
+      each namespace to deny all ingress and egress traffic. Application teams can then configure
+      additional NetworkPolicy resources in their namespace to allow desired traffic.
+spec:
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
+  rules:
+    - name: default-deny
+      match:
+        resources:
+          kinds:
+            - Namespace
+          name: "*"
+      generate:
+        apiVersion: networking.k8s.io/v1
+        kind: NetworkPolicy
+        name: default-deny
+        namespace: '{{ "{{" }}request.object.metadata.name{{ "}}" }}'
+        data:
+          spec:
+            podSelector: {}
+            policyTypes:
+              - Ingress
+              - Egress

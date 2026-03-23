@@ -3,6 +3,9 @@ kind: ClusterPolicy
 metadata:
   name: restrict-external-ips
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/title: Restrict External IPs
     policies.kyverno.io/category: Best Practices
     policies.kyverno.io/severity: medium
@@ -15,7 +18,7 @@ metadata:
       See: https://github.com/kyverno/kyverno/issues/1367. This policy validates
       that the `externalIPs` field is not set on a Service.
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   background: true
   rules:
   - name: check-ips

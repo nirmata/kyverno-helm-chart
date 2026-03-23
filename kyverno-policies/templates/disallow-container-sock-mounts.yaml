@@ -3,20 +3,22 @@ kind: ClusterPolicy
 metadata:
   name: disallow-container-sock-mounts
   annotations:
+    {{- if .Values.installation.ignoreOnInstall }}
+    kyverno.io/ignore: "true"
+    {{- end }}
     policies.kyverno.io/title: Disallow CRI socket mounts
     policies.kyverno.io/category: Best Practices, EKS Best Practices
     policies.kyverno.io/severity: medium
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/minversion: 1.6.0
     kyverno.io/kyverno-version: 1.10.0
-    kyverno.io/ignore: "true"
     policies.kyverno.io/description: >-
       Container daemon socket bind mounts allows access to the container engine on the
       node. This access can be used for privilege escalation and to manage containers
       outside of Kubernetes, and hence should not be allowed. This policy validates that
       the sockets used for CRI engines Docker, Containerd, and CRI-O are not used.
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: {{ .Values.validationFailureAction | default "Audit" }}
   background: true
   rules:
   - name: validate-docker-sock-mount
